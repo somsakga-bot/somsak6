@@ -120,7 +120,12 @@ textarea{min-height:60px;resize:vertical}
   </div>
 
   <div class="topbtn"><button class="btn-main btn-add" id="btnAdd">ลงบันทึกนัดหมาย</button></div>
-  <div class="adminbar" id="adminBar">🔓 โหมดจัดการข้อมูล: กดที่รายการเพื่อแก้ไข/ลบ</div>
+  <div class="adminbar" id="adminBar">🔓 โหมดจัดการข้อมูล: กดที่รายการเพื่อแก้ไข/ลบ
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn-sm" id="btnSheet" style="background:#14532d;color:#fff;border-color:#14532d">📝 เปิด Google Sheet</button>
+      <button class="btn-sm" id="btnReload">🔄 รีเฟรชข้อมูล</button>
+    </div>
+  </div>
 
   <div class="legend" id="legend"></div>
 
@@ -149,7 +154,7 @@ textarea{min-height:60px;resize:vertical}
 
   <div class="foot">
     <button class="btn-main btn-manage" id="btnManage">จัดการข้อมูล</button>
-    <small>ข้อมูลเก็บใน Google Sheet · เว็บเวอร์ชัน 6</small>
+    <small>ข้อมูลเก็บใน Google Sheet · เว็บเวอร์ชัน 7</small>
   </div>
 </div>
 
@@ -186,7 +191,7 @@ textarea{min-height:60px;resize:vertical}
 
 <script>
 /* ========= ตั้งค่า: ใส่ URL ของ Apps Script Web App (ลงท้าย /exec) ========= */
-const API_URL = 'https://script.google.com/macros/s/AKfycbweSDmaiQ1oeZnpv6m9Um3P6Q4BVTw-PSpZovacIsho36aAfpjl_YeTTsKh4R2o13BZ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzo3LmDyChA3kNV0FpPpy-tpKIFtIY0ZZbCa_gwpIDGKFDJqEkXUb9WnOFR9jxXUVjU/exec';
 /* ============================================================================ */
 
 const TYPES = [
@@ -418,6 +423,16 @@ $('cOk').onclick=async()=>{
   $('cOk').disabled=false;
 };
 $('codeIn').onkeydown=e=>{ if(e.key==='Enter') $('cOk').click(); };
+
+$('btnReload').onclick=async()=>{ await load(); toast('รีเฟรชข้อมูลแล้ว'); };
+$('btnSheet').onclick=async()=>{
+  const w=window.open('','_blank');
+  try{
+    const r=await post({action:'sheetUrl',code:adminCode});
+    if(r.ok && w){ w.location.href=r.url; }
+    else { if(w) w.close(); toast(r.error||'เปิดไม่สำเร็จ'); if(r.error==='รหัสไม่ถูกต้อง') logout(); }
+  }catch(e){ if(w) w.close(); toast('เชื่อมต่อไม่สำเร็จ'); }
+};
 
 /* ---------- nav / print ---------- */
 $('prev').onclick=()=>{ view.setMonth(view.getMonth()-1); selDate=null; render(); };
