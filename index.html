@@ -149,7 +149,7 @@ textarea{min-height:60px;resize:vertical}
 
   <div class="foot">
     <button class="btn-main btn-manage" id="btnManage">จัดการข้อมูล</button>
-    <small>ข้อมูลเก็บใน Google Sheet · เว็บเวอร์ชัน 5</small>
+    <small>ข้อมูลเก็บใน Google Sheet · เว็บเวอร์ชัน 6</small>
   </div>
 </div>
 
@@ -230,6 +230,15 @@ function jsonp(url){
     document.body.appendChild(s);
   });
 }
+
+function normWhen(v){
+  v=String(v==null?'':v).trim();
+  const m=v.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+  if(m && !/Z$|[+-]\d{2}:?\d{2}$/.test(v)) return m[1]+'-'+m[2]+'-'+m[3]+' '+m[4]+':'+m[5];
+  const d=new Date(v);
+  if(!isNaN(d)) return d.toLocaleString('sv-SE',{timeZone:'Asia/Bangkok',hour12:false}).slice(0,16);
+  return '';
+}
 async function load(){
   if(API_URL.indexOf('PASTE_')>=0){ $('list').innerHTML='<div class="empty">ยังไม่ได้ตั้งค่า API_URL</div>'; return; }
   let j;
@@ -247,10 +256,12 @@ async function load(){
     $('list').innerHTML='<div class="empty">โหลดข้อมูลไม่สำเร็จ<br><small>'+esc(j.error)+'</small></div>';
     return;
   }
-  items = j.items.sort((a,b)=>a.when.localeCompare(b.when));
+  const raw=j.items||[]; let bad=[];
+  items = raw.map(i=>{ const w=normWhen(i.when); if(!w) bad.push(i.when); return Object.assign({},i,{when:w, recordedAt:normWhen(i.recordedAt)||i.recordedAt}); })
+             .filter(i=>i.when).sort((a,b)=>a.when.localeCompare(b.when));
   try{ render(); }
   catch(e){ $('list').innerHTML='<div class="empty">แสดงผลผิดพลาด<br><small>'+esc(e.message)+'</small></div>'; return; }
-  $('status').textContent='โหลดข้อมูลแล้ว '+items.length+' รายการ';
+  $('status').textContent='โหลดข้อมูลแล้ว '+items.length+' รายการ'+(bad.length?' (ข้าม '+bad.length+' รายการที่วันที่ผิดรูปแบบ เช่น: '+String(bad[0]).slice(0,40)+')':'');
 }
 async function post(payload){
   const r = await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
@@ -305,7 +316,7 @@ function nearBtn(){
   const [y,mo]=ym.split('-').map(Number);
   return '<br><small>มีนัดทั้งหมด '+items.length+' รายการ</small><br><button class="btn-sm" style="margin-top:8px" onclick="goTo(\''+ym+'\')">ไปดูนัดเดือน'+MONTHS[mo-1]+' '+(y+543)+'</button>';
 }
-function goTo(ym){ const [y,m]=ym.split('-').map(Number); view=new Date(y,m-1,1); selDate=null; render(); }
+function goTo(ym){ const [y,m]=ym.split('-').map(Number); if(!y||!m) return; view=new Date(y,m-1,1); selDate=null; render(); }
 function renderList(){
   const {title,rows} = currentList();
   $('listTitle').textContent = title;
