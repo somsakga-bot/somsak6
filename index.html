@@ -39,7 +39,7 @@ body{font-family:'Sarabun',system-ui,sans-serif;background:var(--bg);color:var(-
 .legend{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px 0}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:4px 10px;border-radius:999px;background:#fff;border:1.5px solid var(--line);cursor:pointer;user-select:none}
 .chip i{width:12px;height:12px;border-radius:50%;display:inline-block}
-.chip.off{opacity:.35}
+.chip.off{opacity:.55;background:#e5e7eb;text-decoration:line-through}
 
 /* calendar */
 .cal{margin:10px 12px;background:var(--card);border-radius:12px;padding:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
@@ -149,7 +149,7 @@ textarea{min-height:60px;resize:vertical}
 
   <div class="foot">
     <button class="btn-main btn-manage" id="btnManage">จัดการข้อมูล</button>
-    <small>ข้อมูลเก็บใน Google Sheet · เว็บเวอร์ชัน 3</small>
+    <small>ข้อมูลเก็บใน Google Sheet · เว็บเวอร์ชัน 4</small>
   </div>
 </div>
 
@@ -307,7 +307,7 @@ function renderList(){
       <div class="t">${esc(i.title)}</div>
       <div class="m"><span class="badge" style="background:${colorOf(i.type)}">${esc(i.type)}</span>${esc(thDate(i.when))} · ${esc(timeOf(i))} น.</div>
       ${i.place?`<div class="m">📍 ${esc(i.place)}</div>`:''}
-    </div>`).join('') : '<div class="empty">ไม่มีนัดหมายในช่วงนี้'+(items.length?'<br><small>มีนัดทั้งหมด '+items.length+' รายการ (กดลูกศร ‹ › เปลี่ยนเดือน)</small>':'')+'</div>';
+    </div>`).join('') : '<div class="empty">ไม่มีนัดหมายในช่วงนี้'+(hidden.size&&items.some(i=>hidden.has(i.type))?'<br><small style="color:#b45309">⚠ มีนัดที่ถูกซ่อนด้วยตัวกรองสี (ป้ายที่ขีดฆ่า) — กดที่ป้ายนั้นเพื่อแสดงอีกครั้ง</small><br><button class="btn-sm" style="margin-top:8px" onclick="hidden.clear();render()">แสดงทุกประเภท</button>':(items.length?'<br><small>มีนัดทั้งหมด '+items.length+' รายการ (กดลูกศร ‹ › เปลี่ยนเดือน)</small>':''))+'</div>';
   $('list').querySelectorAll('.item').forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
 }
 
