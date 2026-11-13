@@ -1,0 +1,24 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ทดสอบการเชื่อมต่อ</title>
+<style>body{font-family:sans-serif;padding:12px}pre{white-space:pre-wrap;word-break:break-all;background:#f3f4f6;padding:10px;border-radius:8px;font-size:13px}</style></head>
+<body><h3>ทดสอบการเชื่อมต่อ Apps Script</h3><pre id="o">กำลังทดสอบ...</pre>
+<script>
+const API='https://script.google.com/macros/s/AKfycbzo3LmDyChA3kNV0FpPpy-tpKIFtIY0ZZbCa_gwpIDGKFDJqEkXUb9WnOFR9jxXUVjU/exec';
+const o=document.getElementById('o');let log='เวลาเครื่อง: '+new Date().toString()+'\n\n';
+const out=()=>o.textContent=log;
+(async()=>{
+  try{
+    const r=await fetch(API+'?action=list&t='+Date.now());
+    const t=await r.text();
+    log+='[1] fetch: HTTP '+r.status+'\n'+t.slice(0,600)+'\n\n';
+  }catch(e){ log+='[1] fetch ล้มเหลว: '+e.message+'\n\n'; }
+  out();
+  await new Promise(res=>{
+    const cb='cb'+Date.now();const s=document.createElement('script');
+    const to=setTimeout(()=>{log+='[2] JSONP: หมดเวลา 20 วินาที\n';res();},20000);
+    window[cb]=d=>{clearTimeout(to);log+='[2] JSONP สำเร็จ: ok='+d.ok+' จำนวน='+(d.items?d.items.length:'-')+(d.error?' error='+d.error:'')+'\n';res();};
+    s.onerror=()=>{clearTimeout(to);log+='[2] JSONP โหลดสคริปต์ไม่ได้ (ได้รับหน้าที่ไม่ใช่ JavaScript เช่นหน้าล็อกอิน/หน้า error)\n';res();};
+    s.src=API+'?action=list&callback='+cb;document.body.appendChild(s);
+  });
+  out();
+})();
+</script></body></html>

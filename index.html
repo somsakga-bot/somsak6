@@ -144,11 +144,12 @@ textarea{min-height:60px;resize:vertical}
       <button class="btn-sm btn-print" id="btnPrint">🖨 พิมพ์เอกสาร</button>
     </div>
   </div>
+  <div class="loading" id="status" style="padding:4px 12px 0;font-size:12px"></div>
   <div class="list" id="list"><div class="loading">กำลังโหลดข้อมูล...</div></div>
 
   <div class="foot">
     <button class="btn-main btn-manage" id="btnManage">จัดการข้อมูล</button>
-    <small>ข้อมูลเก็บใน Google Sheet · เว็บเวอร์ชัน 2</small>
+    <small>ข้อมูลเก็บใน Google Sheet · เว็บเวอร์ชัน 3</small>
   </div>
 </div>
 
@@ -247,7 +248,9 @@ async function load(){
     return;
   }
   items = j.items.sort((a,b)=>a.when.localeCompare(b.when));
-  render();
+  try{ render(); }
+  catch(e){ $('list').innerHTML='<div class="empty">แสดงผลผิดพลาด<br><small>'+esc(e.message)+'</small></div>'; return; }
+  $('status').textContent='โหลดข้อมูลแล้ว '+items.length+' รายการ';
 }
 async function post(payload){
   const r = await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
@@ -304,7 +307,7 @@ function renderList(){
       <div class="t">${esc(i.title)}</div>
       <div class="m"><span class="badge" style="background:${colorOf(i.type)}">${esc(i.type)}</span>${esc(thDate(i.when))} · ${esc(timeOf(i))} น.</div>
       ${i.place?`<div class="m">📍 ${esc(i.place)}</div>`:''}
-    </div>`).join('') : '<div class="empty">ไม่มีนัดหมาย</div>';
+    </div>`).join('') : '<div class="empty">ไม่มีนัดหมายในช่วงนี้'+(items.length?'<br><small>มีนัดทั้งหมด '+items.length+' รายการ (กดลูกศร ‹ › เปลี่ยนเดือน)</small>':'')+'</div>';
   $('list').querySelectorAll('.item').forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
 }
 
@@ -417,6 +420,7 @@ $('btnPrint').onclick=()=>{
 };
 
 render();
+$('list').innerHTML='<div class="loading">กำลังโหลดข้อมูล...</div>';
 load();
 </script>
 </body>
