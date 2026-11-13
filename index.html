@@ -148,7 +148,7 @@ textarea{min-height:60px;resize:vertical}
 
   <div class="foot">
     <button class="btn-main btn-manage" id="btnManage">จัดการข้อมูล</button>
-    <small>ข้อมูลเก็บใน Google Sheet</small>
+    <small>ข้อมูลเก็บใน Google Sheet · เว็บเวอร์ชัน 2</small>
   </div>
 </div>
 
@@ -185,7 +185,7 @@ textarea{min-height:60px;resize:vertical}
 
 <script>
 /* ========= ตั้งค่า: ใส่ URL ของ Apps Script Web App (ลงท้าย /exec) ========= */
-const API_URL = 'https://script.google.com/macros/s/AKfycbwA0gp4emU2H4fjcKyrr52_sTMx9TvzQJrBDVv92UWkR-E7_YQfPlzlBB2yiY5tgX3A/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzo3LmDyChA3kNV0FpPpy-tpKIFtIY0ZZbCa_gwpIDGKFDJqEkXUb9WnOFR9jxXUVjU/exec';
 /* ============================================================================ */
 
 const TYPES = [
@@ -230,7 +230,7 @@ function jsonp(url){
   });
 }
 async function load(){
-  if(API_URL.indexOf('PASTE_')===0){ $('list').innerHTML='<div class="empty">ยังไม่ได้ตั้งค่า API_URL</div>'; return; }
+  if(API_URL.indexOf('PASTE_')>=0){ $('list').innerHTML='<div class="empty">ยังไม่ได้ตั้งค่า API_URL</div>'; return; }
   let j;
   try{
     const r = await fetch(API_URL+'?action=list&t='+Date.now());
