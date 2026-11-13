@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ตารางนัดหมายผู้บังคับบัญชา - ตำรวจภูธรจังหวัดปราจีนบุรี</title>
+<link rel="icon" href="logo.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#dc2626; --blue:#1d4ed8; --green:#16a34a; --orange:#f97316; --sky:#38bdf8;
+  --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg:#f3f4f6; --card:#fff;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Sarabun',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;-webkit-text-size-adjust:100%}
+.wrap{max-width:560px;margin:0 auto;background:#f9fafb;min-height:100vh;box-shadow:0 0 20px rgba(0,0,0,.08)}
+
+/* header */
+.hero{position:relative;height:190px;background:#1f2937 url('header.jpg') center 55%/cover no-repeat;color:#fff}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.15),rgba(0,0,0,.75))}
+.hero-in{position:absolute;left:0;right:0;bottom:0;z-index:2;display:flex;gap:12px;align-items:center;padding:14px}
+.hero img{width:64px;height:64px;border-radius:50%;background:#fff;object-fit:contain;border:2px solid #fff}
+.hero h1{margin:0;font-size:20px;line-height:1.25;text-shadow:0 1px 3px #000}
+.hero p{margin:2px 0 0;font-size:14px;opacity:.95;text-shadow:0 1px 3px #000}
+
+/* main buttons : สูง 1 ซม. */
+.topbtn{display:flex;justify-content:center;padding:14px 12px 4px}
+.btn-main{height:1cm;min-width:200px;padding:0 22px;border:0;border-radius:8px;font:700 16px 'Sarabun',sans-serif;color:#fb923c;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.btn-add{background:#14532d}
+.btn-manage{background:#7f1d1d}
+.btn-main:active{transform:scale(.97)}
+.foot{display:flex;flex-direction:column;align-items:center;gap:8px;padding:22px 12px 30px}
+.foot small{color:var(--muted)}
+.adminbar{display:none;margin:8px 12px 0;padding:8px 12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;font-size:14px}
+.adminbar.on{display:block}
+
+/* legend */
+.legend{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px 0}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:4px 10px;border-radius:999px;background:#fff;border:1.5px solid var(--line);cursor:pointer;user-select:none}
+.chip i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.chip.off{opacity:.35}
+
+/* calendar */
+.cal{margin:10px 12px;background:var(--card);border-radius:12px;padding:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.cal-head b{font-size:18px}
+.navb{border:1px solid var(--line);background:#fff;border-radius:8px;width:40px;height:36px;font-size:18px;cursor:pointer}
+.today-b{font-size:13px;padding:0 10px;width:auto}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.dow{text-align:center;font-size:12px;font-weight:700;color:var(--muted);padding:3px 0}
+.dow.sun{color:#dc2626}
+.day{min-height:56px;border:1px solid var(--line);border-radius:8px;padding:3px;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.day.out{background:#f3f4f6;opacity:.55}
+.day.today{border:2px solid #14532d;background:#f0fdf4}
+.day.sel{outline:3px solid #f59e0b}
+.day .n{font-size:12px;font-weight:700}
+.bar{font-size:10px;line-height:1.2;color:#fff;border-radius:3px;padding:1px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.more{font-size:10px;color:var(--muted)}
+
+/* list */
+.listhead{display:flex;justify-content:space-between;align-items:center;padding:6px 12px 0}
+.listhead h2{margin:0;font-size:17px}
+.btn-sm{border:1px solid #9ca3af;background:#fff;border-radius:8px;padding:6px 12px;font:600 14px 'Sarabun',sans-serif;cursor:pointer}
+.btn-print{background:#1f2937;color:#fff;border-color:#1f2937}
+.list{padding:8px 12px 0;display:flex;flex-direction:column;gap:8px}
+.item{background:#fff;border-radius:10px;padding:10px 12px;border-left:8px solid #999;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:pointer}
+.item .t{font-weight:700;font-size:16px}
+.item .m{font-size:14px;color:#4b5563;margin-top:2px}
+.badge{display:inline-block;font-size:12px;color:#fff;border-radius:999px;padding:1px 9px;margin-right:6px}
+.empty{text-align:center;color:var(--muted);padding:22px 0}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.modal.on{display:flex}
+.sheet{background:#fff;width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px}
+.sheet h3{margin:0 0 10px;font-size:19px}
+.row{display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:15px}
+.row b{min-width:108px;color:#374151}
+.row span{flex:1;white-space:pre-wrap;word-break:break-word}
+label{display:block;font-weight:700;font-size:14px;margin:10px 0 3px}
+input,select,textarea{width:100%;font:16px 'Sarabun',sans-serif;padding:9px 10px;border:1.5px solid #cbd5e1;border-radius:8px;background:#fff}
+textarea{min-height:60px;resize:vertical}
+.acts{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.acts button{flex:1;min-width:110px;height:44px;border:0;border-radius:10px;font:700 16px 'Sarabun',sans-serif;cursor:pointer}
+.ok{background:#14532d;color:#fff}.cancel{background:#e5e7eb}.danger{background:#b91c1c;color:#fff}.edit{background:#1d4ed8;color:#fff}
+.err{color:#b91c1c;font-size:14px;margin-top:6px;min-height:18px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 18px;border-radius:999px;z-index:99;display:none;font-size:15px}
+.loading{text-align:center;padding:16px;color:var(--muted)}
+
+/* print */
+#printArea{display:none}
+@media print{
+  @page{size:A4 landscape;margin:12mm}
+  body{background:#fff}
+  .wrap,.modal,.toast{display:none!important}
+  #printArea{display:block}
+  #printArea,#printArea *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .ph{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .ph img{width:60px;height:60px;object-fit:contain}
+  .ph h2{margin:0;font-size:20px}.ph p{margin:0;font-size:14px}
+  table.pt{width:100%;border-collapse:collapse;font-size:12px}
+  .pt th,.pt td{border:1px solid #444;padding:4px 6px;vertical-align:top}
+  .pt th{background:#e5e7eb}
+  .pt tr{page-break-inside:avoid}
+  .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-in">
+      <img src="logo.jpg" alt="โลโก้">
+      <div>
+        <h1>ตารางนัดหมายผู้บังคับบัญชา</h1>
+        <p>ตำรวจภูธรจังหวัดปราจีนบุรี</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="topbtn"><button class="btn-main btn-add" id="btnAdd">ลงบันทึกนัดหมาย</button></div>
+  <div class="adminbar" id="adminBar">🔓 โหมดจัดการข้อมูล: กดที่รายการเพื่อแก้ไข/ลบ</div>
+
+  <div class="legend" id="legend"></div>
+
+  <div class="cal">
+    <div class="cal-head">
+      <button class="navb" id="prev">‹</button>
+      <div style="text-align:center"><b id="monthTitle"></b></div>
+      <div style="display:flex;gap:4px">
+        <button class="navb today-b" id="todayBtn">วันนี้</button>
+        <button class="navb" id="next">›</button>
+      </div>
+    </div>
+    <div class="grid" id="dow"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="listhead">
+    <h2 id="listTitle">นัดหมาย</h2>
+    <div style="display:flex;gap:6px">
+      <button class="btn-sm" id="showMonth">ทั้งเดือน</button>
+      <button class="btn-sm btn-print" id="btnPrint">🖨 พิมพ์เอกสาร</button>
+    </div>
+  </div>
+  <div class="list" id="list"><div class="loading">กำลังโหลดข้อมูล...</div></div>
+
+  <div class="foot">
+    <button class="btn-main btn-manage" id="btnManage">จัดการข้อมูล</button>
+    <small>ข้อมูลเก็บใน Google Sheet</small>
+  </div>
+</div>
+
+<!-- detail -->
+<div class="modal" id="mDetail"><div class="sheet" id="detailBody"></div></div>
+
+<!-- form -->
+<div class="modal" id="mForm"><div class="sheet">
+  <h3 id="formTitle">ลงบันทึกนัดหมาย</h3>
+  <label>ประเภทการนัด *</label><select id="fType"></select>
+  <label>วันเวลาที่นัดหมาย *</label><input type="datetime-local" id="fWhen">
+  <label>เรื่อง *</label><input id="fTitle" maxlength="300">
+  <label>สถานที่</label><input id="fPlace" maxlength="200">
+  <label>ประธาน</label><input id="fChair" maxlength="150">
+  <label>การแต่งกาย</label><input id="fDress" maxlength="150">
+  <label>สิ่งที่ต้องเตรียม</label><textarea id="fPrepare"></textarea>
+  <label>หมายเหตุ</label><textarea id="fNote"></textarea>
+  <label>ชื่อผู้บันทึก *</label><input id="fRecorder" maxlength="100" placeholder="ชื่อ-สกุล / ยศ ชื่อ">
+  <div class="err" id="formErr"></div>
+  <div class="acts"><button class="cancel" id="fCancel">ยกเลิก</button><button class="ok" id="fSave">บันทึก</button></div>
+</div></div>
+
+<!-- code -->
+<div class="modal" id="mCode"><div class="sheet">
+  <h3>จัดการข้อมูล</h3>
+  <label>กรอกรหัสเข้าจัดการข้อมูล</label>
+  <input type="password" id="codeIn" inputmode="numeric" autocomplete="off">
+  <div class="err" id="codeErr"></div>
+  <div class="acts"><button class="cancel" id="cCancel">ยกเลิก</button><button class="ok" id="cOk">ยืนยัน</button></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+<div id="printArea"></div>
+
+<script>
+/* ========= ตั้งค่า: ใส่ URL ของ Apps Script Web App (ลงท้าย /exec) ========= */
+const API_URL = 'PASTE_YOUR_WEB_APP_URL_HERE';
+/* ============================================================================ */
+
+const TYPES = [
+  {label:'นัดประชุม', color:'#dc2626'},
+  {label:'นัดร่วมพิธี', color:'#1d4ed8'},
+  {label:'นัดบุคคลหรือวีไอพี', color:'#16a34a'},
+  {label:'นัดหมอหรือตรวจสุขภาพ', color:'#f97316'},
+  {label:'นัดส่วนตัว/ครอบครัว', color:'#38bdf8'}
+];
+const colorOf = t => (TYPES.find(x=>x.label===t)||{color:'#6b7280'}).color;
+const MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const DOW = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+
+let items = [];
+let view = new Date(); view.setDate(1);
+let selDate = null;            // 'yyyy-mm-dd'
+let hidden = new Set();        // ประเภทที่ซ่อน
+let adminCode = sessionStorage.getItem('adm') || '';
+let editingId = null;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const dateOf = it => it.when.slice(0,10);
+const timeOf = it => it.when.slice(11,16);
+function thDate(s){ const [y,m,d]=s.slice(0,10).split('-').map(Number); return d+' '+MONTHS[m-1]+' '+(y+543); }
+function thFull(s){ return thDate(s)+' เวลา '+s.slice(11,16)+' น.'; }
+function thStamp(s){ return s ? thDate(s)+' '+s.slice(11,16)+' น.' : '-'; }
+function toast(m){ const t=$('toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
+
+async function load(){
+  try{
+    const r = await fetch(API_URL+'?t='+Date.now());
+    const j = await r.json();
+    if(!j.ok) throw new Error(j.error);
+    items = j.items.sort((a,b)=>a.when.localeCompare(b.when));
+    render();
+  }catch(e){
+    $('list').innerHTML='<div class="empty">โหลดข้อมูลไม่สำเร็จ<br><small>'+esc(e.message||e)+'</small></div>';
+  }
+}
+async function post(payload){
+  const r = await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+  return r.json();
+}
+
+/* ---------- render ---------- */
+function visible(){ return items.filter(i=>!hidden.has(i.type)); }
+
+function renderLegend(){
+  $('legend').innerHTML = TYPES.map(t=>`<span class="chip ${hidden.has(t.label)?'off':''}" data-t="${esc(t.label)}"><i style="background:${t.color}"></i>${esc(t.label)}</span>`).join('');
+  $('legend').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+    const t=c.dataset.t; hidden.has(t)?hidden.delete(t):hidden.add(t); render();
+  });
+}
+
+function renderCal(){
+  $('monthTitle').textContent = MONTHS[view.getMonth()]+' '+(view.getFullYear()+543);
+  $('dow').innerHTML = DOW.map((d,i)=>`<div class="dow ${i===0?'sun':''}">${d}</div>`).join('');
+  const first = new Date(view.getFullYear(), view.getMonth(), 1);
+  const start = new Date(first); start.setDate(1-first.getDay());
+  const vis = visible(); const by = {};
+  vis.forEach(i=>(by[dateOf(i)]=by[dateOf(i)]||[]).push(i));
+  const today = ymd(new Date());
+  let h='';
+  for(let k=0;k<42;k++){
+    const d = new Date(start); d.setDate(start.getDate()+k);
+    if(k>=35 && d.getMonth()!==view.getMonth()) break;
+    const key = ymd(d), list = by[key]||[];
+    const cls = ['day']; if(d.getMonth()!==view.getMonth())cls.push('out'); if(key===today)cls.push('today'); if(key===selDate)cls.push('sel');
+    h += `<div class="${cls.join(' ')}" data-d="${key}"><span class="n">${d.getDate()}</span>`
+      + list.slice(0,2).map(i=>`<div class="bar" style="background:${colorOf(i.type)}">${esc(timeOf(i))} ${esc(i.title)}</div>`).join('')
+      + (list.length>2?`<div class="more">+${list.length-2} รายการ</div>`:'') + `</div>`;
+  }
+  $('grid').innerHTML = h;
+  $('grid').querySelectorAll('.day').forEach(c=>c.onclick=()=>{
+    selDate = (selDate===c.dataset.d)?null:c.dataset.d; render();
+  });
+}
+
+function currentList(){
+  const vis = visible();
+  if(selDate) return {title:'นัดหมายวันที่ '+thDate(selDate), rows:vis.filter(i=>dateOf(i)===selDate)};
+  const p = view.getFullYear()+'-'+pad(view.getMonth()+1);
+  return {title:'นัดหมายเดือน'+MONTHS[view.getMonth()]+' '+(view.getFullYear()+543), rows:vis.filter(i=>i.when.startsWith(p))};
+}
+
+function renderList(){
+  const {title,rows} = currentList();
+  $('listTitle').textContent = title;
+  $('showMonth').style.display = selDate?'':'none';
+  $('list').innerHTML = rows.length ? rows.map(i=>`
+    <div class="item" data-id="${esc(i.id)}" style="border-left-color:${colorOf(i.type)}">
+      <div class="t">${esc(i.title)}</div>
+      <div class="m"><span class="badge" style="background:${colorOf(i.type)}">${esc(i.type)}</span>${esc(thDate(i.when))} · ${esc(timeOf(i))} น.</div>
+      ${i.place?`<div class="m">📍 ${esc(i.place)}</div>`:''}
+    </div>`).join('') : '<div class="empty">ไม่มีนัดหมาย</div>';
+  $('list').querySelectorAll('.item').forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
+}
+
+function render(){ renderLegend(); renderCal(); renderList(); $('adminBar').classList.toggle('on',!!adminCode); $('btnManage').textContent = adminCode?'ออกจากโหมดจัดการ':'จัดการข้อมูล'; }
+
+/* ---------- detail ---------- */
+function openDetail(id){
+  const i = items.find(x=>x.id===id); if(!i) return;
+  const R = (k,v)=>`<div class="row"><b>${k}</b><span>${esc(v||'-')}</span></div>`;
+  $('detailBody').innerHTML = `
+    <h3 style="border-left:8px solid ${colorOf(i.type)};padding-left:8px">${esc(i.title)}</h3>
+    <div class="row"><b>ประเภทการนัด</b><span><span class="badge" style="background:${colorOf(i.type)}">${esc(i.type)}</span></span></div>
+    ${R('วันเวลานัดหมาย',thFull(i.when))}${R('สถานที่',i.place)}${R('ประธาน',i.chair)}${R('การแต่งกาย',i.dress)}
+    ${R('สิ่งที่ต้องเตรียม',i.prepare)}${R('หมายเหตุ',i.note)}${R('ผู้บันทึก',i.recorder)}${R('วันเวลาบันทึก',thStamp(i.recordedAt))}
+    <div class="acts">
+      ${adminCode?`<button class="edit" id="dEdit">แก้ไข</button><button class="danger" id="dDel">ลบ</button>`:''}
+      <button class="cancel" id="dClose">ปิด</button>
+    </div>`;
+  $('mDetail').classList.add('on');
+  $('dClose').onclick=()=>$('mDetail').classList.remove('on');
+  if(adminCode){
+    $('dEdit').onclick=()=>{ $('mDetail').classList.remove('on'); openForm(i); };
+    $('dDel').onclick=async()=>{
+      if(!confirm('ยืนยันการลบนัดหมายนี้?')) return;
+      const r = await post({action:'delete',id:i.id,code:adminCode});
+      if(r.ok){ toast('ลบแล้ว'); $('mDetail').classList.remove('on'); load(); }
+      else { toast(r.error||'ลบไม่สำเร็จ'); if(r.error==='รหัสไม่ถูกต้อง') logout(); }
+    };
+  }
+}
+$('mDetail').onclick=e=>{ if(e.target.id==='mDetail') $('mDetail').classList.remove('on'); };
+
+/* ---------- form ---------- */
+$('fType').innerHTML = TYPES.map(t=>`<option value="${esc(t.label)}">● ${esc(t.label)}</option>`).join('');
+function updTypeColor(){ $('fType').style.borderColor = colorOf($('fType').value); $('fType').style.borderWidth='3px'; }
+$('fType').onchange = updTypeColor;
+
+function openForm(it){
+  editingId = it?it.id:null;
+  $('formTitle').textContent = it?'แก้ไขนัดหมาย':'ลงบันทึกนัดหมาย';
+  $('fType').value = it?it.type:TYPES[0].label; updTypeColor();
+  $('fWhen').value = it? it.when.replace(' ','T') : (selDate? selDate+'T09:00' : '');
+  $('fTitle').value = it?it.title:''; $('fPlace').value = it?it.place:''; $('fChair').value = it?it.chair:'';
+  $('fDress').value = it?it.dress:''; $('fPrepare').value = it?it.prepare:''; $('fNote').value = it?it.note:'';
+  $('fRecorder').value = it?it.recorder:(localStorage.getItem('recorder')||'');
+  $('formErr').textContent=''; $('mForm').classList.add('on');
+}
+$('btnAdd').onclick=()=>openForm(null);
+$('fCancel').onclick=()=>$('mForm').classList.remove('on');
+
+$('fSave').onclick=async()=>{
+  const data = {
+    type:$('fType').value, when:$('fWhen').value.replace('T',' '), title:$('fTitle').value.trim(),
+    place:$('fPlace').value.trim(), chair:$('fChair').value.trim(), dress:$('fDress').value.trim(),
+    prepare:$('fPrepare').value.trim(), note:$('fNote').value.trim(), recorder:$('fRecorder').value.trim()
+  };
+  if(!data.when) return $('formErr').textContent='กรุณาระบุวันเวลาที่นัดหมาย';
+  if(!data.title) return $('formErr').textContent='กรุณาระบุเรื่อง';
+  if(!data.recorder) return $('formErr').textContent='กรุณาระบุชื่อผู้บันทึก';
+  const b=$('fSave'); b.disabled=true; b.textContent='กำลังบันทึก...';
+  try{
+    const r = await post(editingId?{action:'update',id:editingId,code:adminCode,data}:{action:'add',code:adminCode,data});
+    if(!r.ok){ $('formErr').textContent=r.error||'บันทึกไม่สำเร็จ'; }
+    else{
+      localStorage.setItem('recorder',data.recorder);
+      $('mForm').classList.remove('on'); toast('บันทึกแล้ว');
+      view = new Date(data.when.slice(0,10)+'T00:00:00'); view.setDate(1);
+      await load();
+    }
+  }catch(e){ $('formErr').textContent='เชื่อมต่อไม่สำเร็จ: '+e.message; }
+  b.disabled=false; b.textContent='บันทึก';
+};
+
+/* ---------- admin ---------- */
+function logout(){ adminCode=''; sessionStorage.removeItem('adm'); render(); }
+$('btnManage').onclick=()=>{
+  if(adminCode){ logout(); toast('ออกจากโหมดจัดการแล้ว'); return; }
+  $('codeIn').value=''; $('codeErr').textContent=''; $('mCode').classList.add('on'); setTimeout(()=>$('codeIn').focus(),100);
+};
+$('cCancel').onclick=()=>$('mCode').classList.remove('on');
+$('cOk').onclick=async()=>{
+  const code=$('codeIn').value.trim(); if(!code) return;
+  $('cOk').disabled=true;
+  try{
+    const r = await post({action:'verify',code});
+    if(r.ok){ adminCode=code; sessionStorage.setItem('adm',code); $('mCode').classList.remove('on'); render(); toast('เข้าสู่โหมดจัดการข้อมูลแล้ว'); }
+    else $('codeErr').textContent='รหัสไม่ถูกต้อง';
+  }catch(e){ $('codeErr').textContent='เชื่อมต่อไม่สำเร็จ'; }
+  $('cOk').disabled=false;
+};
+$('codeIn').onkeydown=e=>{ if(e.key==='Enter') $('cOk').click(); };
+
+/* ---------- nav / print ---------- */
+$('prev').onclick=()=>{ view.setMonth(view.getMonth()-1); selDate=null; render(); };
+$('next').onclick=()=>{ view.setMonth(view.getMonth()+1); selDate=null; render(); };
+$('todayBtn').onclick=()=>{ const n=new Date(); view=new Date(n.getFullYear(),n.getMonth(),1); selDate=ymd(n); render(); };
+$('showMonth').onclick=()=>{ selDate=null; render(); };
+
+$('btnPrint').onclick=()=>{
+  const {title,rows} = currentList();
+  const leg = TYPES.map(t=>`<span style="margin-right:12px"><span class="sw" style="background:${t.color}"></span>${esc(t.label)}</span>`).join('');
+  $('printArea').innerHTML = `
+    <div class="ph"><img src="logo.jpg"><div><h2>ตารางนัดหมายผู้บังคับบัญชา</h2><p>ตำรวจภูธรจังหวัดปราจีนบุรี · ${esc(title)}</p></div></div>
+    <p style="font-size:12px;margin:4px 0 8px">${leg}</p>
+    <table class="pt"><thead><tr><th>วันเวลา</th><th>ประเภท</th><th>เรื่อง</th><th>สถานที่</th><th>ประธาน</th><th>การแต่งกาย</th><th>สิ่งที่ต้องเตรียม</th><th>หมายเหตุ</th><th>ผู้บันทึก</th></tr></thead><tbody>
+    ${rows.length?rows.map(i=>`<tr><td>${esc(thDate(i.when))}<br>${esc(timeOf(i))} น.</td><td><span class="sw" style="background:${colorOf(i.type)}"></span>${esc(i.type)}</td><td>${esc(i.title)}</td><td>${esc(i.place)}</td><td>${esc(i.chair)}</td><td>${esc(i.dress)}</td><td>${esc(i.prepare)}</td><td>${esc(i.note)}</td><td>${esc(i.recorder)}</td></tr>`).join(''):'<tr><td colspan="9" style="text-align:center">ไม่มีนัดหมาย</td></tr>'}
+    </tbody></table>
+    <p style="font-size:11px;margin-top:8px">พิมพ์เมื่อ ${esc(thDate(ymd(new Date())))} ${pad(new Date().getHours())}:${pad(new Date().getMinutes())} น.</p>`;
+  window.print();
+};
+
+render();
+load();
+</script>
+</body>
+</html>
