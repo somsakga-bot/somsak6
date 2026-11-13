@@ -37,7 +37,7 @@ body{font-family:'Sarabun',system-ui,sans-serif;background:var(--bg);color:var(-
 
 /* legend */
 .legend{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px 0}
-.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:4px 10px;border-radius:999px;background:#fff;border:1.5px solid var(--line);cursor:pointer;user-select:none}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:4px 10px;border-radius:999px;background:#fff;border:1.5px solid var(--line);user-select:none}
 .chip i{width:12px;height:12px;border-radius:50%;display:inline-block}
 .chip.off{opacity:.55;background:#e5e7eb;text-decoration:line-through}
 
@@ -149,7 +149,7 @@ textarea{min-height:60px;resize:vertical}
 
   <div class="foot">
     <button class="btn-main btn-manage" id="btnManage">จัดการข้อมูล</button>
-    <small>ข้อมูลเก็บใน Google Sheet · เว็บเวอร์ชัน 4</small>
+    <small>ข้อมูลเก็บใน Google Sheet · เว็บเวอร์ชัน 5</small>
   </div>
 </div>
 
@@ -261,10 +261,8 @@ async function post(payload){
 function visible(){ return items.filter(i=>!hidden.has(i.type)); }
 
 function renderLegend(){
-  $('legend').innerHTML = TYPES.map(t=>`<span class="chip ${hidden.has(t.label)?'off':''}" data-t="${esc(t.label)}"><i style="background:${t.color}"></i>${esc(t.label)}</span>`).join('');
-  $('legend').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
-    const t=c.dataset.t; hidden.has(t)?hidden.delete(t):hidden.add(t); render();
-  });
+  $('legend').innerHTML = TYPES.map(t=>`<span class="chip"><i style="background:${t.color}"></i>${esc(t.label)}</span>`).join('');
+
 }
 
 function renderCal(){
@@ -298,6 +296,16 @@ function currentList(){
   return {title:'นัดหมายเดือน'+MONTHS[view.getMonth()]+' '+(view.getFullYear()+543), rows:vis.filter(i=>i.when.startsWith(p))};
 }
 
+
+function nearBtn(){
+  if(!items.length) return '';
+  const t=ymd(new Date());
+  const nx = items.find(i=>dateOf(i)>=t) || items[items.length-1];
+  const ym = nx.when.slice(0,7);
+  const [y,mo]=ym.split('-').map(Number);
+  return '<br><small>มีนัดทั้งหมด '+items.length+' รายการ</small><br><button class="btn-sm" style="margin-top:8px" onclick="goTo(\''+ym+'\')">ไปดูนัดเดือน'+MONTHS[mo-1]+' '+(y+543)+'</button>';
+}
+function goTo(ym){ const [y,m]=ym.split('-').map(Number); view=new Date(y,m-1,1); selDate=null; render(); }
 function renderList(){
   const {title,rows} = currentList();
   $('listTitle').textContent = title;
@@ -307,7 +315,7 @@ function renderList(){
       <div class="t">${esc(i.title)}</div>
       <div class="m"><span class="badge" style="background:${colorOf(i.type)}">${esc(i.type)}</span>${esc(thDate(i.when))} · ${esc(timeOf(i))} น.</div>
       ${i.place?`<div class="m">📍 ${esc(i.place)}</div>`:''}
-    </div>`).join('') : '<div class="empty">ไม่มีนัดหมายในช่วงนี้'+(hidden.size&&items.some(i=>hidden.has(i.type))?'<br><small style="color:#b45309">⚠ มีนัดที่ถูกซ่อนด้วยตัวกรองสี (ป้ายที่ขีดฆ่า) — กดที่ป้ายนั้นเพื่อแสดงอีกครั้ง</small><br><button class="btn-sm" style="margin-top:8px" onclick="hidden.clear();render()">แสดงทุกประเภท</button>':(items.length?'<br><small>มีนัดทั้งหมด '+items.length+' รายการ (กดลูกศร ‹ › เปลี่ยนเดือน)</small>':''))+'</div>';
+    </div>`).join('') : '<div class="empty">ไม่มีนัดหมายในช่วงนี้'+nearBtn()+'</div>';
   $('list').querySelectorAll('.item').forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
 }
 
