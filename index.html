@@ -17,7 +17,7 @@ body{font-family:'Sarabun',system-ui,sans-serif;background:var(--bg);color:var(-
 .wrap{max-width:560px;margin:0 auto;background:#f9fafb;min-height:100vh;box-shadow:0 0 20px rgba(0,0,0,.08)}
 
 /* header */
-.hero{position:relative;height:190px;background:#1f2937 url('header.png') center 55%/cover no-repeat;color:#fff}
+.hero{position:relative;height:190px;background:#1f2937 url('header.jpg') center 55%/cover no-repeat;color:#fff}
 .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.15),rgba(0,0,0,.75))}
 .hero-in{position:absolute;left:0;right:0;bottom:0;z-index:2;display:flex;gap:12px;align-items:center;padding:14px}
 .hero img{width:64px;height:64px;border-radius:50%;background:#fff;object-fit:contain;border:2px solid #fff}
@@ -35,6 +35,10 @@ body{font-family:'Sarabun',system-ui,sans-serif;background:var(--bg);color:var(-
 .adminbar{display:none;margin:8px 12px 0;padding:8px 12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;font-size:14px}
 .adminbar.on{display:block}
 
+/* alert bar */
+.alertbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:8px 12px 0;padding:8px 12px;background:#ecfdf5;border:1px solid #34d399;border-radius:8px;font-size:14px}
+.alertbar.off{background:#f3f4f6;border-color:#d1d5db}
+.alertbar div{display:flex;gap:6px}
 /* legend */
 .legend{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px 0}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:4px 10px;border-radius:999px;background:#fff;border:1.5px solid var(--line);user-select:none}
@@ -127,6 +131,7 @@ textarea{min-height:60px;resize:vertical}
     </div>
   </div>
 
+  <div class="alertbar" id="alertBar"><span id="alertTxt"></span><div><button class="btn-sm" id="btnAlertTest">🔊 ทดสอบเสียง</button><button class="btn-sm" id="btnAlertToggle"></button></div></div>
   <div class="legend" id="legend"></div>
 
   <div class="cal">
@@ -154,7 +159,7 @@ textarea{min-height:60px;resize:vertical}
 
   <div class="foot">
     <button class="btn-main btn-manage" id="btnManage">จัดการข้อมูล</button>
-    <small>ข้อมูลเก็บใน Google Sheet · เว็บเวอร์ชัน 7</small>
+    <small>ข้อมูลเก็บใน Google Sheet · เว็บเวอร์ชัน 8</small>
   </div>
 </div>
 
@@ -186,19 +191,20 @@ textarea{min-height:60px;resize:vertical}
   <div class="acts"><button class="cancel" id="cCancel">ยกเลิก</button><button class="ok" id="cOk">ยืนยัน</button></div>
 </div></div>
 
+<div class="modal" id="mAlert" style="z-index:70"><div class="sheet" id="alertBody"></div></div>
 <div class="toast" id="toast"></div>
 <div id="printArea"></div>
 
 <script>
 /* ========= ตั้งค่า: ใส่ URL ของ Apps Script Web App (ลงท้าย /exec) ========= */
-const API_URL = 'https://script.google.com/macros/s/AKfycbx7vJLXWKo1Q01FkijmHutUebWUgoSrTe5LP0KQJIQ9oupQHfMtV_X08bjndGDe6PMJ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzo3LmDyChA3kNV0FpPpy-tpKIFtIY0ZZbCa_gwpIDGKFDJqEkXUb9WnOFR9jxXUVjU/exec';
 /* ============================================================================ */
 
 const TYPES = [
   {label:'นัดประชุม', color:'#dc2626'},
-  {label:'นัดร่วมพิธี', color:'#f57f17'},
+  {label:'นัดร่วมพิธี', color:'#1d4ed8'},
   {label:'นัดบุคคลหรือวีไอพี', color:'#16a34a'},
-  {label:'นัดหมอหรือตรวจสุขภาพ', color:'#ff1493'},
+  {label:'นัดหมอหรือตรวจสุขภาพ', color:'#f97316'},
   {label:'นัดส่วนตัว/ครอบครัว', color:'#38bdf8'}
 ];
 const colorOf = t => (TYPES.find(x=>x.label===t)||{color:'#6b7280'}).color;
@@ -267,6 +273,7 @@ async function load(){
   try{ render(); }
   catch(e){ $('list').innerHTML='<div class="empty">แสดงผลผิดพลาด<br><small>'+esc(e.message)+'</small></div>'; return; }
   $('status').textContent='โหลดข้อมูลแล้ว '+items.length+' รายการ'+(bad.length?' (ข้าม '+bad.length+' รายการที่วันที่ผิดรูปแบบ เช่น: '+String(bad[0]).slice(0,40)+')':'');
+  checkAlerts();
 }
 async function post(payload){
   const r = await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
@@ -452,6 +459,104 @@ $('btnPrint').onclick=()=>{
     <p style="font-size:11px;margin-top:8px">พิมพ์เมื่อ ${esc(thDate(ymd(new Date())))} ${pad(new Date().getHours())}:${pad(new Date().getMinutes())} น.</p>`;
   window.print();
 };
+
+
+/* ================= ระบบเตือน (เสียง + ป๊อปอัพ) =================
+   เตือน 2 ครั้งต่อนัด: 20.00 น. ของวันก่อนนัด 1 วัน และก่อนเวลานัด 2 ชั่วโมง
+   ทำงานเมื่อเปิดหน้าเว็บนี้ค้างไว้ในเบราว์เซอร์ */
+let alertOn = localStorage.getItem('alertOn')!=='0';
+let audioCtx=null, beepTimer=null, alertQueue=[];
+function unlockAudio(){
+  try{
+    if(!audioCtx){ const AC=window.AudioContext||window.webkitAudioContext; if(AC) audioCtx=new AC(); }
+    if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
+  }catch(e){}
+}
+['pointerdown','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,unlockAudio,{passive:true}));
+function beep(){
+  if(!audioCtx || audioCtx.state!=='running') return;
+  const t=audioCtx.currentTime;
+  [0,0.25,0.5].forEach((d,i)=>{
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type='square'; o.frequency.value=i%2?880:1175;
+    g.gain.setValueAtTime(0.0001,t+d);
+    g.gain.exponentialRampToValueAtTime(0.35,t+d+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.2);
+    o.connect(g); g.connect(audioCtx.destination); o.start(t+d); o.stop(t+d+0.22);
+  });
+  try{ navigator.vibrate && navigator.vibrate([300,150,300]); }catch(e){}
+}
+function stopBeep(){ if(beepTimer){ clearInterval(beepTimer); beepTimer=null; } }
+function startBeep(){ stopBeep(); let n=0; beep(); beepTimer=setInterval(()=>{ if(++n>=15) return stopBeep(); beep(); },2000); }
+
+function whenDate(i){
+  const m=String(i.when).match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/);
+  return m? new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]) : new Date(NaN);
+}
+function loadFired(){ try{ return JSON.parse(localStorage.getItem('fired')||'{}'); }catch(e){ return {}; } }
+
+function checkAlerts(){
+  if(!alertOn || !items.length) return;
+  const now=new Date(), fired=loadFired(), due=[], live=new Set();
+  items.forEach(i=>{
+    const w=whenDate(i); if(isNaN(w)) return;
+    const k1=i.id+'|'+i.when+'|D1', k2=i.id+'|'+i.when+'|H2';
+    live.add(k1); live.add(k2);
+    if(w<=now) return;
+    const d1=new Date(w.getFullYear(),w.getMonth(),w.getDate()-1,20,0);
+    const h2=new Date(w.getTime()-2*3600*1000);
+    if(now>=h2){
+      if(!fired[k1]) fired[k1]=1;                       // เลยเวลาเตือนล่วงหน้าแล้ว ข้ามไปเตือนแบบ 2 ชม.
+      if(!fired[k2]) due.push({key:k2,kind:'อีก 2 ชั่วโมงถึงเวลานัด',item:i});
+    }else if(now>=d1 && !fired[k1]){
+      const same = ymd(now)===ymd(w);
+      due.push({key:k1,kind:same?'วันนี้มีนัดหมาย':'พรุ่งนี้มีนัดหมาย',item:i});
+    }
+  });
+  due.forEach(d=>fired[d.key]=1);
+  Object.keys(fired).forEach(k=>{ if(!live.has(k)) delete fired[k]; });
+  try{ localStorage.setItem('fired',JSON.stringify(fired)); }catch(e){}
+  if(due.length) showAlert(due);
+}
+
+function showAlert(list){
+  alertQueue=alertQueue.concat(list);
+  const R=(ic,v)=>v?`<div class="m">${ic} ${esc(v)}</div>`:'';
+  $('alertBody').innerHTML='<h3>🔔 แจ้งเตือนนัดหมาย</h3>'+alertQueue.map(d=>{
+    const i=d.item;
+    return `<div class="item" style="border-left-color:${colorOf(i.type)};cursor:default;margin-bottom:8px">
+      <div class="m" style="color:#b91c1c;font-weight:700">${esc(d.kind)}</div>
+      <div class="t">${esc(i.title)}</div>
+      <div class="m">🕒 ${esc(thFull(i.when))}</div>
+      ${R('📍',i.place)}${R('👤 ประธาน:',i.chair)}${R('👔',i.dress)}${R('📋 เตรียม:',i.prepare)}${R('📝',i.note)}
+    </div>`;
+  }).join('')+'<div class="acts"><button class="ok" id="alertOk">รับทราบ</button></div>';
+  $('mAlert').classList.add('on');
+  startBeep();
+  $('alertOk').onclick=()=>{ stopBeep(); alertQueue=[]; $('mAlert').classList.remove('on'); };
+  if(document.hidden && 'Notification' in window && Notification.permission==='granted'){
+    try{ new Notification('แจ้งเตือนนัดหมาย',{body:list.map(d=>d.kind+': '+d.item.title).join('\n'),tag:'appt'}); }catch(e){}
+  }
+}
+
+function renderAlertBar(){
+  $('alertBar').classList.toggle('off',!alertOn);
+  $('alertTxt').textContent = alertOn ? '🔔 เตือนอัตโนมัติ: เปิด (ต้องเปิดหน้านี้ค้างไว้)' : '🔕 เตือนอัตโนมัติ: ปิด';
+  $('btnAlertToggle').textContent = alertOn ? 'ปิดเตือน' : 'เปิดเตือน';
+}
+$('btnAlertToggle').onclick=()=>{
+  alertOn=!alertOn; localStorage.setItem('alertOn',alertOn?'1':'0'); renderAlertBar();
+  if(alertOn){ unlockAudio(); if('Notification' in window && Notification.permission==='default'){ try{ Notification.requestPermission(); }catch(e){} } checkAlerts(); }
+};
+$('btnAlertTest').onclick=()=>{
+  unlockAudio();
+  if('Notification' in window && Notification.permission==='default'){ try{ Notification.requestPermission(); }catch(e){} }
+  showAlert([{key:'test',kind:'ทดสอบการเตือน',item:{title:'ตัวอย่างข้อความเตือน',type:'นัดประชุม',when:ymd(new Date())+' 13:00',place:'ห้องประชุม',chair:'',dress:'',prepare:'',note:''}}]);
+};
+renderAlertBar();
+setInterval(checkAlerts,20000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) checkAlerts(); });
+setInterval(()=>{ if(!document.querySelector('.modal.on')) load(); },300000);
 
 render();
 $('list').innerHTML='<div class="loading">กำลังโหลดข้อมูล...</div>';
